@@ -55,10 +55,10 @@ func (ws *WebsocketClient) Connect() error {
 	log.Printf("[INFO] Connecting to %s", url)
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
-	ws.Conn = c
 	if err != nil {
 		return err
 	}
+	ws.Conn = c // c is nil if error. Do not move above because of concurrent goroutines.
 	ws.initData.Do(func() {
 		ws.writeChan = make(chan writingMessage)
 		ws.writeErrChan = make(chan error)
