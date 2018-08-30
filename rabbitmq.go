@@ -46,7 +46,8 @@ type RabbitMQ struct {
 type MQExchange struct {
 	Name            string
 	Type            string
-	RoutingKey      string `json:"routing_key"`
+	WriteRoutingKey string   `json:"write_routing_key"`
+	ReadRoutingKeys []string `json:"read_routing_keys"`
 	Durable         bool
 	AutoDeleted     bool `json:"auto_deleted"`
 	NoWait          bool
@@ -206,7 +207,7 @@ func (r *RabbitMQ) Publish(data interface{}) (err error) {
 	}
 	return r.Channel.Publish(
 		r.Exchange.Name,
-		r.Exchange.RoutingKey,
+		r.Exchange.WriteRoutingKey,
 		false, // mandatory
 		false, // immediate
 		amqp.Publishing{
@@ -252,12 +253,16 @@ func (r *RabbitMQ) QueueInit() (q amqp.Queue, err error) {
 		return
 	}
 
-	err = r.Channel.QueueBind(
-		q.Name,                // queue name
-		r.Exchange.RoutingKey, // routing key
-		r.Exchange.Name,       // exchange
-		false,
-		nil)
+	for _, key := range r.Exchange.ReadRoutingKeys {
+		if err = r.Channel.QueueBind(
+			q.Name,          // queue name
+			key,             // routing key
+			r.Exchange.Name, // exchange
+			false,
+			nil); err != nil {
+			return
+		}
+	}
 
 	return
 }
