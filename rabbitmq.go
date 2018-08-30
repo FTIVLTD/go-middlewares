@@ -253,13 +253,14 @@ func (r *RabbitMQ) QueueInit() (q amqp.Queue, err error) {
 		return
 	}
 
-	for _, key := range r.Exchange.ReadRoutingKeys {
-		if err = r.Channel.QueueBind(
-			q.Name,          // queue name
-			key,             // routing key
-			r.Exchange.Name, // exchange
-			false,
-			nil); err != nil {
+	if len(r.Exchange.ReadRoutingKeys) != 0 {
+		for _, key := range r.Exchange.ReadRoutingKeys {
+			if err = r.Channel.QueueBind(q.Name, key, r.Exchange.Name, false, nil); err != nil {
+				return
+			}
+		}
+	} else {
+		if err = r.Channel.QueueBind(q.Name, "", r.Exchange.Name, false, nil); err != nil {
 			return
 		}
 	}
