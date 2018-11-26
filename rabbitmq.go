@@ -175,6 +175,7 @@ func (r *RabbitMQ) Close() error {
 	if r.Conn != nil {
 		r.Conn.Close()
 		r.Channel.Close()
+		r.Conn = nil
 	}
 	r.State = ""
 	return nil
