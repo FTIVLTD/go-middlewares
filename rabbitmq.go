@@ -171,7 +171,6 @@ func GetConnectedMQ(host Host, ex MQExchange, hd func([]byte) error) (rmq Rabbit
 Close - closing connections
 */
 func (r *RabbitMQ) Close() error {
-	r.hEvent = nil
 	if r.Conn != nil {
 		r.Conn.Close()
 		r.Channel.Close()
