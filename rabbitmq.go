@@ -128,13 +128,9 @@ func (r *RabbitMQ) Reconnect() (err error) {
 				fmt.Printf("[ERROR][MQ] %s, try to reconnect...\n", err)
 				time.Sleep(time.Duration(max(1, r.Host.Delay*min(i, 10))) * time.Second)
 			}
-		} else {
-			if _, err = r.QueueInit(); err != nil {
-				break
-			}
 		}
 	}
-	return
+	return r.Consume()
 }
 
 /*
