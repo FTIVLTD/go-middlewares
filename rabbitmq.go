@@ -44,21 +44,24 @@ type RabbitMQ struct {
 
 // MQExchange - setting for MQ exchange
 type MQExchange struct {
-	Name            string
-	Type            string
-	WriteRoutingKey string   `json:"write_routing_key"`
-	ReadRoutingKeys []string `json:"read_routing_keys"`
-	Durable         bool
-	AutoDeleted     bool `json:"auto_deleted"`
-	NoWait          bool
-	QueueName       string `json:"queue_name"`
-	QueueDurable    bool   `json:"queue_durable"`
-	QueueAutoDelete bool   `json:"queue_auto_delete"`
-	QueueExclusive  bool   `json:"queue_exclusive"`
-	QueueTTL        int32  `json:"queue_ttl"` // TTL period in milliseconds
-	MessageTTL      int32  `json:"message_ttl"`
-	C_AutoAck       bool   `json:"queue_auto_ack"`
-	C_Exclusive     bool
+	Name                string
+	Type                string
+	WriteRoutingKey     string   `json:"write_routing_key"`
+	ReadRoutingKeys     []string `json:"read_routing_keys"`
+	Durable             bool
+	AutoDeleted         bool `json:"auto_deleted"`
+	NoWait              bool
+	QueueName           string `json:"queue_name"`
+	QueueDurable        bool   `json:"queue_durable"`
+	QueueAutoDelete     bool   `json:"queue_auto_delete"`
+	QueueExclusive      bool   `json:"queue_exclusive"`
+	QueueTTL            int32  `json:"queue_ttl"` // TTL period in milliseconds
+	MessageTTL          int32  `json:"message_ttl"`
+	C_AutoAck           bool   `json:"queue_auto_ack"`
+	C_Exclusive         bool
+	QueueMaxLength      int32  `json:"queue_max_length"`
+	QueueMaxLengthBytes int32  `json:"queue_max_length_bytes"`
+	QueueOverflow       string `json:"queue_overflow"`
 }
 
 // Connect - Connecting to Exchange
@@ -234,8 +237,17 @@ func (r *RabbitMQ) QueueInit() (q amqp.Queue, err error) {
 	}
 
 	var arguments amqp.Table = make(amqp.Table)
-	if r.Exchange.MessageTTL != 0 {
+	if r.Exchange.MessageTTL > 0 {
 		arguments["x-message-ttl"] = r.Exchange.MessageTTL
+	}
+	if r.Exchange.QueueMaxLength > 0 {
+		arguments["x-max-length"] = r.Exchange.QueueMaxLength
+	}
+	if r.Exchange.QueueMaxLengthBytes > 0 {
+		arguments["x-max-length-bytes"] = r.Exchange.QueueMaxLengthBytes
+	}
+	if r.Exchange.QueueOverflow != "" {
+		arguments["x-overflow"] = r.Exchange.QueueOverflow
 	}
 
 	q, err = r.Channel.QueueDeclare(
