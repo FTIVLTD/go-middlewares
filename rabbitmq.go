@@ -122,20 +122,41 @@ func min(x, y int) int {
 }
 
 /*
-ReConnect - reopen connection
+Reconnect - reopen connection
 */
-func (r *RabbitMQ) Reconnect() (err error) {
+func (r *RabbitMQ) Reconnect() error {
+	return r.ReconnectAndConsume()
+}
+
+func (r *RabbitMQ) tryToConnect() (err error) {
 	for i := 0; i < max(1, r.Host.Reconnect); i++ {
 		if err = r.Connect(); err != nil {
 			if r.Host.Reconnect > 0 {
-				fmt.Printf("[ERROR][MQ] %s, try to reconnect...\n", err)
+				fmt.Printf("[ERROR][MQ] %v, try to reconnect...\n", err)
 				time.Sleep(time.Duration(max(1, r.Host.Delay*min(i, 10))) * time.Second)
 			}
 		} else {
 			break
 		}
 	}
+	return
+}
+
+/*
+ReconnectAndConsume - reopen connection and consume
+*/
+func (r *RabbitMQ) ReconnectAndConsume() (err error) {
+	if err = r.tryToConnect(); err != nil {
+		return
+	}
 	return r.Consume()
+}
+
+/*
+ReconnectForPublish - reopen connection
+*/
+func (r *RabbitMQ) ReconnectForPublish() error {
+	return r.tryToConnect()
 }
 
 /*
