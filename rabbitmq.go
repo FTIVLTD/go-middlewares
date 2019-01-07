@@ -3,7 +3,6 @@ package middlewares
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -221,7 +220,7 @@ func (r *RabbitMQ) Publish(data interface{}) (err error) {
 	}
 
 	var body []byte
-	
+
 	if r.rawMode {
 		body = data.([]byte)
 	} else {
