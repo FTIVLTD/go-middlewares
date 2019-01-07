@@ -68,6 +68,7 @@ type MQExchange struct {
 func (r *RabbitMQ) Connect() (err error) {
 	r.Lock()
 	defer r.Unlock()
+
 	if r.State == statusConnecting {
 		time.Sleep(1 * time.Second)
 	}
@@ -75,18 +76,20 @@ func (r *RabbitMQ) Connect() (err error) {
 		return
 	}
 	r.State = statusConnecting
-	fmt.Println("[LOG][MQ] Connecting to: ", r.getInfo())
+
 	if r.Conn, err = amqp.Dial(r.getAddressString()); err != nil {
 		logOnError(err, "Dial")
 		r.State = ""
 		return
 	}
+
 	if r.Channel, err = r.Conn.Channel(); err != nil {
 		logOnError(err, "Channel")
 		r.Conn.Close()
 		r.State = ""
 		return err
 	}
+
 	err = r.Channel.ExchangeDeclare(
 		r.Exchange.Name,
 		r.Exchange.Type,
@@ -100,9 +103,9 @@ func (r *RabbitMQ) Connect() (err error) {
 	if err != nil {
 		r.Conn.Close()
 		r.State = ""
-		fmt.Println("[ERROR][MQ] Error in ExchangeDeclare: ", err)
+		return
 	}
-	fmt.Println("[LOG][MQ] Connected to: ", r.getInfo())
+
 	r.State = statusConnected
 	return
 }
@@ -195,6 +198,7 @@ func GetConnectedMQ(host Host, ex MQExchange, hd func([]byte) error) (rmq Rabbit
 Close - closing connections
 */
 func (r *RabbitMQ) Close() error {
+
 	if r.Conn != nil {
 		r.Conn.Close()
 		r.Channel.Close()
@@ -208,13 +212,16 @@ func (r *RabbitMQ) Close() error {
 Publish — publishing message to RabbitMQ exchange
 */
 func (r *RabbitMQ) Publish(data interface{}) (err error) {
+
 	if r.isConnected() == false {
 		err = r.Connect()
 		if err != nil {
 			return
 		}
 	}
+
 	var body []byte
+	
 	if r.rawMode {
 		body = data.([]byte)
 	} else {
@@ -223,9 +230,11 @@ func (r *RabbitMQ) Publish(data interface{}) (err error) {
 			return
 		}
 	}
+
 	if r.Debug {
 		fmt.Println("[DEBUG] Message: ", string(body))
 	}
+
 	return r.Channel.Publish(
 		r.Exchange.Name,
 		r.Exchange.WriteRoutingKey,
@@ -337,7 +346,6 @@ func (r *RabbitMQ) Consume() (err error) {
 		}
 	}()
 
-	log.Printf("Consuming %s ...", r.Queue.Name)
 	return
 }
 
