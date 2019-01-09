@@ -131,6 +131,8 @@ func (r *RabbitMQ) Reconnect() error {
 }
 
 func (r *RabbitMQ) tryToConnect() (err error) {
+	hEvent := r.hEvent
+	r.Close()
 	for i := 0; i < max(1, r.Host.Reconnect); i++ {
 		if err = r.Connect(); err != nil {
 			if r.Host.Reconnect > 0 {
@@ -141,6 +143,7 @@ func (r *RabbitMQ) tryToConnect() (err error) {
 			break
 		}
 	}
+	r.hEvent = hEvent
 	return
 }
 
@@ -197,6 +200,7 @@ func GetConnectedMQ(host Host, ex MQExchange, hd func([]byte) error) (rmq Rabbit
 Close - closing connections
 */
 func (r *RabbitMQ) Close() error {
+	r.hEvent = nil
 
 	if r.Conn != nil {
 		r.Conn.Close()
