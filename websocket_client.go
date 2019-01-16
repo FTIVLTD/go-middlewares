@@ -2,8 +2,6 @@ package middlewares
 
 import (
 	"encoding/json"
-	"flag"
-	"fmt"
 	"log"
 	"strconv"
 	"sync"
@@ -48,11 +46,8 @@ func (ws *WebsocketClient) OnError(h func(interface{})) {
 Connect - connecting to WS server
 */
 func (ws *WebsocketClient) Connect() error {
-	flag.Parse()
-	log.SetFlags(0)
 
 	url := ws.getAddress()
-	log.Printf("[INFO] Connecting to %s", url)
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
@@ -69,7 +64,7 @@ func (ws *WebsocketClient) Connect() error {
 			}
 		}()
 	})
-	log.Println("[WS] Connected to server")
+
 	return nil
 }
 
@@ -91,11 +86,7 @@ func (ws *WebsocketClient) Listen() {
 		defer ws.Conn.Close()
 		for {
 			var message interface{}
-			// t, m, err := ws.Conn.ReadMessage()
-			// fmt.Println(t, m, err)
-			err := ws.Conn.ReadJSON(&message)
-
-			if err != nil {
+			if err := ws.Conn.ReadJSON(&message); err != nil {
 				go ws.handleError(err)
 				return
 			}
@@ -112,7 +103,6 @@ func (ws *WebsocketClient) checkConnection(done <-chan struct{}) {
 		ws.Conn.SetReadDeadline(time.Now().Add(pongWait))
 		if err := ws.writeMessage(websocket.PingMessage, []byte("PING")); err != nil {
 			ws.Conn.SetReadDeadline(time.Time{})
-			log.Println("[ERROR][WS] Sending ping:", err)
 			return
 		}
 		if timer == nil {
@@ -139,7 +129,6 @@ func (ws *WebsocketClient) handleData(data interface{}) {
 	}
 }
 func (ws *WebsocketClient) handleError(err interface{}) {
-	log.Println("[ERROR][WS] Read error:", err)
 	if ws.errorHandler != nil {
 		ws.errorHandler(err)
 	}
@@ -164,7 +153,6 @@ func (ws *WebsocketClient) getAddress() string {
 Close - closing connection
 */
 func (ws *WebsocketClient) Close() error {
-	fmt.Println("[WS][CLIENT] Closing connection")
 	if ws.Conn != nil {
 		return ws.writeMessage(
 			websocket.CloseMessage,
