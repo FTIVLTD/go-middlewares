@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"encoding/json"
-	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -128,6 +127,7 @@ func (ws *WebsocketClient) handleData(data interface{}) {
 		ws.dataHandler(data)
 	}
 }
+
 func (ws *WebsocketClient) handleError(err interface{}) {
 	if ws.errorHandler != nil {
 		ws.errorHandler(err)
