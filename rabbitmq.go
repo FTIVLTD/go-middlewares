@@ -214,7 +214,14 @@ func (r *RabbitMQ) Close() error {
 /*
 Publish — publishing message to RabbitMQ exchange
 */
-func (r *RabbitMQ) Publish(data interface{}) (err error) {
+func (r *RabbitMQ) Publish(data interface{}) error {
+	return r.PublishWithRoutingKey(data, r.Exchange.WriteRoutingKey)
+}
+
+/*
+PublishWithRoutingKey — publishing message to RabbitMQ exchange using a routing key
+*/
+func (r *RabbitMQ) PublishWithRoutingKey(data interface{}, writeRoutingKey string) (err error) {
 
 	if r.isConnected() == false {
 		err = r.Connect()
@@ -240,7 +247,7 @@ func (r *RabbitMQ) Publish(data interface{}) (err error) {
 
 	return r.Channel.Publish(
 		r.Exchange.Name,
-		r.Exchange.WriteRoutingKey,
+		writeRoutingKey,
 		false, // mandatory
 		false, // immediate
 		amqp.Publishing{
